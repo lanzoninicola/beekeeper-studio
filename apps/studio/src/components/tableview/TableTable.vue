@@ -99,7 +99,10 @@
           </div>
         </form>
       </div>
+      <div class="flex">
       <div ref="table"></div>
+      <div style="background-color: red; width:100px"></div>
+    </div>
       <ColumnFilterModal
         :modalName="columnFilterModalName"
         :columnsWithFilterAndOrder="columnsWithFilterAndOrder"
@@ -867,6 +870,7 @@ export default Vue.extend({
       this.tabulator = new TabulatorFull(this.$refs.table, {
         height: this.actualTableHeight,
         columns: this.tableColumns,
+
         nestedFieldSeparator: false,
         placeholder: "No Data",
         renderHorizontal: 'virtual',
@@ -894,7 +898,8 @@ export default Vue.extend({
         },
         rowContextMenu:[
 
-        ]
+        ],
+        selectable:true
       });
       this.tabulator.on('cellEdited', this.cellEdited)
       this.tabulator.on('dataProcessed', this.maybeScrollAndSetWidths)
