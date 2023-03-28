@@ -1,45 +1,32 @@
 <!-- https://tabulator.info/docs/5.4/select#main-contents -->
 <template>
-  <div v-hotkey="keymap" class="tabletable flex-col" :class="{'view-only': !editable}">
+  <div v-hotkey="keymap" class="tabletable flex-col" :class="{ 'view-only': !editable }">
     <template v-if="!table && initialized">
       <div class="no-content">
 
       </div>
     </template>
-    <template v-else >
+    <template v-else>
       <div class="table-filter">
         <form @submit.prevent="triggerFilter" class="flex flex-middle">
           <div class="filter-group" style="margin-left: 0.2rem">
-            <button
-              type="button"
-              class="btn btn-flat btn-fab"
-              :class="{'btn-primary': !allColumnsSelected}"
-              :title="`Set column visibility (${hiddenColumnCount} hidden)`"
-              @click="showColumnFilterModal()"
-            >
+            <button type="button" class="btn btn-flat btn-fab" :class="{ 'btn-primary': !allColumnsSelected }"
+              :title="`Set column visibility (${hiddenColumnCount} hidden)`" @click="showColumnFilterModal()">
               <i class="material-icons-outlined">visibility</i>
             </button>
           </div>
           <div v-if="filterMode === 'raw'" class="filter-group row gutter expand">
             <div class="btn-wrap">
-              <button class="btn btn-flat btn-fab" type="button" @click.stop="changeFilterMode('builder')" title="Toggle Filter Type">
+              <button class="btn btn-flat btn-fab" type="button" @click.stop="changeFilterMode('builder')"
+                title="Toggle Filter Type">
                 <i class="material-icons-outlined">filter_alt</i>
               </button>
             </div>
             <div class="expand filter">
               <div class="filter-wrap">
-                <input
-                  class="form-control"
-                  type="text"
-                  v-model="filterRaw"
-                  ref="valueInput"
-                  :placeholder=filterPlaceholder
-                />
-                <button
-                  type="button"
-                  class="clear btn-link"
-                  @click.prevent="filterRaw = ''"
-                >
+                <input class="form-control" type="text" v-model="filterRaw" ref="valueInput"
+                  :placeholder=filterPlaceholder />
+                <button type="button" class="clear btn-link" @click.prevent="filterRaw = ''">
                   <i class="material-icons">cancel</i>
                 </button>
               </div>
@@ -52,42 +39,31 @@
           </div>
           <div v-else-if="filterMode === 'builder'" class="filter-group row gutter expand">
             <div class="btn-wrap">
-              <button class="btn btn-flat btn-fab" type="button" @click.stop="changeFilterMode('raw')" title="Toggle Filter Type">
+              <button class="btn btn-flat btn-fab" type="button" @click.stop="changeFilterMode('raw')"
+                title="Toggle Filter Type">
                 <i class="material-icons">code</i>
               </button>
             </div>
             <div>
               <div class="select-wrap">
                 <select name="Filter Field" class="form-control" v-model="filter.field">
-                  <option
-                    v-for="column in table.columns"
-                    v-bind:key="column.columnName"
-                    :value="column.columnName"
-                  >{{column.columnName}}</option>
+                  <option v-for="column in table.columns" v-bind:key="column.columnName" :value="column.columnName">
+                    {{ column.columnName }}</option>
                 </select>
               </div>
             </div>
             <div>
               <div class="select-wrap">
                 <select name="Filter Type" class="form-control" v-model="filter.type">
-                  <option v-for="(v, k) in filterTypes" v-bind:key="k" :value="v">{{k}}</option>
+                  <option v-for="(v, k) in filterTypes" v-bind:key="k" :value="v">{{ k }}</option>
                 </select>
               </div>
             </div>
             <div class="expand filter">
               <div class="filter-wrap">
-                <input
-                  class="form-control"
-                  type="text"
-                  v-model="filter.value"
-                  :placeholder=builderPlaceholder
-                  ref="valueInput"
-                />
-                <button
-                  type="button"
-                  class="clear btn-link"
-                  @click.prevent="filter.value = ''"
-                >
+                <input class="form-control" type="text" v-model="filter.value" :placeholder=builderPlaceholder
+                  ref="valueInput" />
+                <button type="button" class="clear btn-link" @click.prevent="filter.value = ''">
                   <i class="material-icons">cancel</i>
                 </button>
               </div>
@@ -101,14 +77,11 @@
         </form>
       </div>
       <div class="flex">
-      <div ref="table"></div>
-      <div style="background-color: red; width:100px"></div>
-    </div>
-      <ColumnFilterModal
-        :modalName="columnFilterModalName"
-        :columnsWithFilterAndOrder="columnsWithFilterAndOrder"
-        @changed="applyColumnChanges"
-      />
+        <div ref="table"></div>
+        <div ref="rowDetails" style="background-color: red;"></div>
+      </div>
+      <ColumnFilterModal :modalName="columnFilterModalName" :columnsWithFilterAndOrder="columnsWithFilterAndOrder"
+        @changed="applyColumnChanges" />
     </template>
 
     <statusbar :mode="statusbarMode">
@@ -120,9 +93,10 @@
         </x-button>
         <!-- Info -->
         <table-length :table="table" :connection="connection" />
-        <a @click="refreshTable" tabindex="0" role="button" class="statusbar-item hoverable" v-if="lastUpdatedText && !error" :title="'Updated' + ' ' + lastUpdatedText">
+        <a @click="refreshTable" tabindex="0" role="button" class="statusbar-item hoverable"
+          v-if="lastUpdatedText && !error" :title="'Updated' + ' ' + lastUpdatedText">
           <i class="material-icons">update</i>
-          <span>{{lastUpdatedText}}</span>
+          <span>{{ lastUpdatedText }}</span>
         </a>
         <span v-if="error" class="statusbar-item error" :title="error.message">
           <i class="material-icons">error_outline</i>
@@ -133,7 +107,7 @@
       <!-- Pagination -->
       <div class="tabulator-paginator">
         <div class="flex-center flex-middle flex">
-          <a @click="page = page  - 1" v-tooltip="ctrlOrCmd('left')"><i class="material-icons">navigate_before</i></a>
+          <a @click="page = page - 1" v-tooltip="ctrlOrCmd('left')"><i class="material-icons">navigate_before</i></a>
           <input type="number" v-model="page" />
           <a @click="page = page + 1" v-tooltip="ctrlOrCmd('right')"><i class="material-icons">navigate_next</i></a>
         </div>
@@ -141,25 +115,27 @@
 
       <!-- Pending Edits -->
       <div class="col x4 statusbar-actions flex-right">
-        <!-- <div v-if="missingPrimaryKey" class="flex flex-right">
+      <!-- <div v-if="missingPrimaryKey" class="flex flex-right">
           <span class="statusbar-item">
             <i
             class="material-icons text-danger"
             v-tooltip="'Zero (or multiple) primary keys detected, table editing is disabled.'"
             >warning</i>
           </span>
-        </div> -->
+              </div> -->
 
         <template v-if="pendingChangesCount > 0">
           <x-button class="btn btn-flat" @click.prevent="discardChanges">Reset</x-button>
-          <x-button class="btn btn-primary btn-badge btn-icon" @click.prevent="saveChanges" :title="saveButtonText" :class="{'error': !!saveError}">
+          <x-button class="btn btn-primary btn-badge btn-icon" @click.prevent="saveChanges" :title="saveButtonText"
+            :class="{ 'error': !!saveError }">
             <i v-if="error" class="material-icons ">error_outline</i>
-            <span class="badge" v-if="!error">{{pendingChangesCount}}</span>
+            <span class="badge" v-if="!error">{{ pendingChangesCount }}</span>
             <span>Apply</span>
           </x-button>
         </template>
         <template v-if="!editable">
-          <span class="statusbar-item" :title="readOnlyNotice"><i class="material-icons-outlined">info</i> Editing Disabled</span>
+          <span class="statusbar-item" :title="readOnlyNotice"><i class="material-icons-outlined">info</i> Editing
+            Disabled</span>
         </template>
 
         <!-- Actions -->
@@ -211,7 +187,7 @@ import rawLog from 'electron-log'
 import _ from 'lodash'
 import TimeAgo from 'javascript-time-ago'
 import globals from '@/common/globals';
-import {AppEvent} from '../../common/AppEvent';
+import { AppEvent } from '../../common/AppEvent';
 import { vueEditor } from '@shared/lib/tabulator/helpers';
 import NullableInputEditorVue from '@shared/components/tabulator/NullableInputEditor.vue';
 import TableLength from '@/components/common/TableLength.vue'
@@ -220,6 +196,7 @@ import { Tabulator } from 'tabulator-tables'
 import { TableUpdate } from '@/lib/db/models';
 import { markdownTable } from 'markdown-table'
 import { dialectFor } from '@shared/lib/dialects/models'
+import Split from 'split.js'
 const log = rawLog.scope('TableTable')
 const FILTER_MODE_BUILDER = 'builder'
 const FILTER_MODE_RAW = 'raw'
@@ -294,11 +271,11 @@ export default Vue.extend({
       return cols
         .filter((c) => columnNames.includes(c.getField()))
         .map((c, idx) => ({
-        name: c.getField(),
-        dataType: typeOf(c.getField()),
-        filter: c.isVisible(),
-        order: idx
-      }))
+          name: c.getField(),
+          dataType: typeOf(c.getField()),
+          filter: c.isVisible(),
+          order: idx
+        }))
     },
 
     page: {
@@ -354,119 +331,119 @@ export default Vue.extend({
           }
         },
         {
-        label: '<x-menuitem><x-label>Resize all columns to fit content</x-label></x-menuitem>',
-        action: (_e, _column: Tabulator.ColumnComponent) => {
-          try {
-            this.tabulator.blockRedraw()
-            const columns = this.tabulator.getColumns()
-            columns.forEach((col) => {
-              col.setWidth(true)
-            })
-          } catch (error) {
-            console.error(error)
-          } finally {
-            this.tabulator.restoreRedraw()
+          label: '<x-menuitem><x-label>Resize all columns to fit content</x-label></x-menuitem>',
+          action: (_e, _column: Tabulator.ColumnComponent) => {
+            try {
+              this.tabulator.blockRedraw()
+              const columns = this.tabulator.getColumns()
+              columns.forEach((col) => {
+                col.setWidth(true)
+              })
+            } catch (error) {
+              console.error(error)
+            } finally {
+              this.tabulator.restoreRedraw()
+            }
           }
-        }
-      },
+        },
         {
-        label: '<x-menuitem><x-label>Resize all columns to fixed width</x-label></x-menuitem>',
-        action: (_e, _column: Tabulator.ColumnComponent) => {
-          try {
-            this.tabulator.blockRedraw()
-            const columns = this.tabulator.getColumns()
-            columns.forEach((col) => {
-              col.setWidth(200)
-            })
-            // const layout = this.tabulator.getColumns().map((c: CC) => ({
-            //   field: c.getField(),
-            //   width: c.getWidth(),
-            // }))
-            // this.tabulator.setColumnLayout(layout)
-            // this.tabulator.redraw(true)
-          } catch (error) {
-            console.error(error)
-          } finally {
-            this.tabulator.restoreRedraw()
+          label: '<x-menuitem><x-label>Resize all columns to fixed width</x-label></x-menuitem>',
+          action: (_e, _column: Tabulator.ColumnComponent) => {
+            try {
+              this.tabulator.blockRedraw()
+              const columns = this.tabulator.getColumns()
+              columns.forEach((col) => {
+                col.setWidth(200)
+              })
+              // const layout = this.tabulator.getColumns().map((c: CC) => ({
+              //   field: c.getField(),
+              //   width: c.getWidth(),
+              // }))
+              // this.tabulator.setColumnLayout(layout)
+              // this.tabulator.redraw(true)
+            } catch (error) {
+              console.error(error)
+            } finally {
+              this.tabulator.restoreRedraw()
+            }
           }
         }
-      }
 
       ]
     },
     cellContextMenu() {
       return [{
-          label: '<x-menuitem><x-label>Set Null</x-label></x-menuitem>',
-          action: (_e, cell: Tabulator.CellComponent) => {
-            if (this.isPrimaryKey(cell.getField())) {
-              // do nothing
-            } else {
-              cell.setValue(null);
-            }
-          },
-          disabled: !this.editable
-        },
-        { separator: true },
-        {
-          label: '<x-menuitem><x-label>Copy Cell</x-label></x-menuitem>',
-          action: (_e, cell) => {
-            this.$native.clipboard.writeText(cell.getValue());
-          },
-        },
-        {
-          label: '<x-menuitem><x-label>Copy Row (JSON)</x-label></x-menuitem>',
-          action: (_e, cell) => {
-            const data = this.modifyRowData(cell.getRow().getData())
-            const fixed = this.$bks.cleanData(data, this.tableColumns)
-            Object.keys(data).forEach((key) => {
-              const v = data[key]
-              const column = this.tableColumns.find((c) => c.field === key)
-              const nuKey = column ? column.title : key
-              fixed[nuKey] = v
-            })
-            this.$native.clipboard.writeText(JSON.stringify(fixed))
+        label: '<x-menuitem><x-label>Set Null</x-label></x-menuitem>',
+        action: (_e, cell: Tabulator.CellComponent) => {
+          if (this.isPrimaryKey(cell.getField())) {
+            // do nothing
+          } else {
+            cell.setValue(null);
           }
         },
-        {
-          label: '<x-menuitem><x-label>Copy Row (TSV / Excel)</x-label></x-menuitem>',
-          action: (_e, cell) => this.$native.clipboard.writeText(Papa.unparse([this.$bks.cleanData(this.modifyRowData(cell.getRow().getData()))], { header: false, delimiter: "\t", quotes: true, escapeFormulae: true }))
+        disabled: !this.editable
+      },
+      { separator: true },
+      {
+        label: '<x-menuitem><x-label>Copy Cell</x-label></x-menuitem>',
+        action: (_e, cell) => {
+          this.$native.clipboard.writeText(cell.getValue());
         },
-        {
-          label: '<x-menuitem><x-label>Copy Row (Markdown)</x-label></x-menuitem>',
-          action: (_e, cell) => {
-            const data = this.modifyRowData(cell.getRow().getData())
-            const fixed = this.$bks.cleanData(data, this.tableColumns)
+      },
+      {
+        label: '<x-menuitem><x-label>Copy Row (JSON)</x-label></x-menuitem>',
+        action: (_e, cell) => {
+          const data = this.modifyRowData(cell.getRow().getData())
+          const fixed = this.$bks.cleanData(data, this.tableColumns)
+          Object.keys(data).forEach((key) => {
+            const v = data[key]
+            const column = this.tableColumns.find((c) => c.field === key)
+            const nuKey = column ? column.title : key
+            fixed[nuKey] = v
+          })
+          this.$native.clipboard.writeText(JSON.stringify(fixed))
+        }
+      },
+      {
+        label: '<x-menuitem><x-label>Copy Row (TSV / Excel)</x-label></x-menuitem>',
+        action: (_e, cell) => this.$native.clipboard.writeText(Papa.unparse([this.$bks.cleanData(this.modifyRowData(cell.getRow().getData()))], { header: false, delimiter: "\t", quotes: true, escapeFormulae: true }))
+      },
+      {
+        label: '<x-menuitem><x-label>Copy Row (Markdown)</x-label></x-menuitem>',
+        action: (_e, cell) => {
+          const data = this.modifyRowData(cell.getRow().getData())
+          const fixed = this.$bks.cleanData(data, this.tableColumns)
 
-            return this.$native.clipboard.writeText(markdownTable([
-              Object.keys(fixed),
-              Object.values(fixed),
-            ]))
+          return this.$native.clipboard.writeText(markdownTable([
+            Object.keys(fixed),
+            Object.values(fixed),
+          ]))
+        }
+      },
+      {
+        label: '<x-menuitem><x-label>Copy Row (Insert)</x-label></x-menuitem>',
+        action: async (_e, cell) => {
+          const fixed = this.$bks.cleanData(this.modifyRowData(cell.getRow().getData()), this.tableColumns)
+          const tableInsert = {
+            table: this.table.name,
+            schema: this.table.schema,
+            data: [fixed],
           }
-        },
-        {
-          label: '<x-menuitem><x-label>Copy Row (Insert)</x-label></x-menuitem>',
-          action: async (_e, cell) => {
-            const fixed = this.$bks.cleanData(this.modifyRowData(cell.getRow().getData()), this.tableColumns)
-            const tableInsert = {
-              table: this.table.name,
-              schema: this.table.schema,
-              data: [fixed],
-            }
-            const query = await this.connection.getInsertQuery(tableInsert)
-            this.$native.clipboard.writeText(query)
-          }
-        },
-        { separator: true },
-        {
-          label: '<x-menuitem><x-label>Clone Row</x-label></x-menuitem>',
-          action: this.cellCloneRow.bind(this),
-          disabled: !this.editable
-        },
-        {
-          label: '<x-menuitem><x-label>Delete Row</x-label></x-menuitem>',
-          action: (_e, cell) => this.addRowToPendingDeletes(cell.getRow()),
-          disabled: !this.editable
-        },
+          const query = await this.connection.getInsertQuery(tableInsert)
+          this.$native.clipboard.writeText(query)
+        }
+      },
+      { separator: true },
+      {
+        label: '<x-menuitem><x-label>Clone Row</x-label></x-menuitem>',
+        action: this.cellCloneRow.bind(this),
+        disabled: !this.editable
+      },
+      {
+        label: '<x-menuitem><x-label>Delete Row</x-label></x-menuitem>',
+        action: (_e, cell) => this.addRowToPendingDeletes(cell.getRow()),
+        disabled: !this.editable
+      },
       ]
     },
     filterPlaceholder() {
@@ -486,8 +463,8 @@ export default Vue.extend({
     },
     pendingChangesCount() {
       return this.pendingChanges.inserts.length
-             + this.pendingChanges.updates.length
-             + this.pendingChanges.deletes.length
+        + this.pendingChanges.updates.length
+        + this.pendingChanges.deletes.length
     },
     hasPendingChanges() {
       return this.pendingChangesCount > 0
@@ -724,13 +701,33 @@ export default Vue.extend({
     columnFilterModalName() {
       return `column-filter-modal-${this.tab.id}`
     },
+
+    splitElements() {
+      return [
+        this.$refs.table,
+        this.$refs.rowDetails,
+      ]
+    }
   },
 
   watch: {
     shouldInitialize() {
-      if (this.shouldInitialize) {
-        this.initialize()
-      }
+
+      if (!this.shouldInitialize) return;
+
+      this.initialize()
+
+      this.$nextTick(() => {
+        this.split = Split(this.splitElements, {
+          elementStyle: (dimension, size) => ({
+            'flex-basis': `calc(${size}%)`,
+          }),
+          sizes: [75, 25],
+          minSize: 280,
+          expandToMin: true,
+          gutterSize: 5,
+        })
+      })
     },
     page: _.debounce(function () {
       this.tabulator.setPage(this.page || 1)
@@ -796,7 +793,7 @@ export default Vue.extend({
   },
   beforeDestroy() {
     document.removeEventListener('click', this.maybeUnselectCell)
-    if(this.interval) clearInterval(this.interval)
+    if (this.interval) clearInterval(this.interval)
     if (this.tabulator) {
       this.tabulator.destroy()
     }
@@ -804,7 +801,7 @@ export default Vue.extend({
   async mounted() {
     document.addEventListener('click', this.maybeUnselectCell)
     if (this.shouldInitialize) {
-      this.$nextTick(async() => {
+      this.$nextTick(async () => {
         await this.initialize()
       })
     }
@@ -822,7 +819,7 @@ export default Vue.extend({
       if (this.columnWidths) {
         try {
           this.tabulator.blockRedraw()
-          this.columnWidths.forEach(({ field, width}) => {
+          this.columnWidths.forEach(({ field, width }) => {
             const col = this.tabulator.getColumn(field)
             if (col) col.setWidth(width)
           })
@@ -897,10 +894,10 @@ export default Vue.extend({
           scrollPageUp: false,
           scrollPageDown: false
         },
-        rowContextMenu:[
+        rowContextMenu: [
 
         ],
-        selectable:true
+        selectable: true
       });
       this.tabulator.on('cellEdited', this.cellEdited)
       this.tabulator.on('dataProcessed', this.maybeScrollAndSetWidths)
@@ -947,13 +944,13 @@ export default Vue.extend({
       return valueCell
     },
     allowHeaderSort(column) {
-      if(!column.dataType) return true
-      if(column.dataType.startsWith('json')) return false
+      if (!column.dataType) return true
+      if (column.dataType.startsWith('json')) return false
       return true
     },
     slimDataType(dt) {
       if (!dt) return null
-      if(dt === 'bit(1)') return dt
+      if (dt === 'bit(1)') return dt
       return dt.split("(")[0]
     },
     editorType(dt) {
@@ -1003,12 +1000,12 @@ export default Vue.extend({
       this.$root.$emit('loadTable', payload)
     },
     copyCell() {
-        if (!this.active) return;
-        if (!this.selectedCell) return;
-        this.selectedCell.getElement().classList.add('copied')
-        const cell = this.selectedCell
-        setTimeout(() => cell.getElement().classList.remove('copied'), 500)
-        this.$native.clipboard.writeText(this.selectedCell.getValue(), false)
+      if (!this.active) return;
+      if (!this.selectedCell) return;
+      this.selectedCell.getElement().classList.add('copied')
+      const cell = this.selectedCell
+      setTimeout(() => cell.getElement().classList.remove('copied'), 500)
+      this.$native.clipboard.writeText(this.selectedCell.getValue(), false)
     },
     cellClick(_e, cell) {
       if (this.selectedCell) this.selectedCell.getElement().classList.remove("selected")
@@ -1168,7 +1165,7 @@ export default Vue.extend({
         primaryKeys,
       }
 
-      const matchesFn =  (update) => _.isEqual(update.primaryKeys, payload.primaryKeys)
+      const matchesFn = (update) => _.isEqual(update.primaryKeys, payload.primaryKeys)
       // remove pending updates for the row marked for deletion
       const discardedUpdates = _.filter(this.pendingChanges.updates, matchesFn)
       const pendingUpdates = _.without(this.pendingChanges.updates, discardedUpdates)
@@ -1189,69 +1186,69 @@ export default Vue.extend({
       }
     },
     async saveChanges() {
-        this.saveError = null
+      this.saveError = null
 
-        let replaceData = false
+      let replaceData = false
 
-        try {
+      try {
 
-          const payload = {
-            inserts: this.buildPendingInserts(),
-            updates: this.pendingChanges.updates,
-            deletes: this.pendingChanges.deletes
-          }
-
-          const result = await this.connection.applyChanges(payload)
-          const updateIncludedPK = this.pendingChanges.updates.find(e => e.column === e.pkColumn)
-
-          if (updateIncludedPK || this.hasPendingInserts || this.hasPendingDeletes) {
-            replaceData = true
-          } else if (this.hasPendingUpdates) {
-            this.tabulator.clearCellEdited()
-            this.tabulator.updateData(result)
-            this.pendingChanges.updates.forEach(edit => {
-              edit.cell.getElement().classList.remove('edited')
-              edit.cell.getElement().classList.add('edit-success')
-              setTimeout(() => {
-                if (edit.cell.getElement()) {
-                  edit.cell.getElement().classList.remove('edit-success')
-                }
-              }, 1000)
-            })
-          }
-
-          if (replaceData) {
-            const niceChanges = pluralize('change', this.pendingChangesCount, true)
-            this.$noty.success(`${niceChanges} successfully applied`)
-            this.tabulator.replaceData()
-          }
-
-          this.resetPendingChanges()
-
-
-        } catch (ex) {
-          this.pendingChanges.updates.forEach(edit => {
-              edit.cell.getElement().classList.add('edit-error')
-          })
-
-
-          this.pendingChanges.inserts.forEach(insert => {
-            insert.row.getElement().classList.add('edit-error')
-          })
-
-          this.saveError = {
-            title: ex.message,
-            message: ex.message,
-            ex
-          }
-          this.$noty.error(ex.message)
-
-          return
-        } finally {
-          if (!this.active) {
-            this.forceRedraw = true
-          }
+        const payload = {
+          inserts: this.buildPendingInserts(),
+          updates: this.pendingChanges.updates,
+          deletes: this.pendingChanges.deletes
         }
+
+        const result = await this.connection.applyChanges(payload)
+        const updateIncludedPK = this.pendingChanges.updates.find(e => e.column === e.pkColumn)
+
+        if (updateIncludedPK || this.hasPendingInserts || this.hasPendingDeletes) {
+          replaceData = true
+        } else if (this.hasPendingUpdates) {
+          this.tabulator.clearCellEdited()
+          this.tabulator.updateData(result)
+          this.pendingChanges.updates.forEach(edit => {
+            edit.cell.getElement().classList.remove('edited')
+            edit.cell.getElement().classList.add('edit-success')
+            setTimeout(() => {
+              if (edit.cell.getElement()) {
+                edit.cell.getElement().classList.remove('edit-success')
+              }
+            }, 1000)
+          })
+        }
+
+        if (replaceData) {
+          const niceChanges = pluralize('change', this.pendingChangesCount, true)
+          this.$noty.success(`${niceChanges} successfully applied`)
+          this.tabulator.replaceData()
+        }
+
+        this.resetPendingChanges()
+
+
+      } catch (ex) {
+        this.pendingChanges.updates.forEach(edit => {
+          edit.cell.getElement().classList.add('edit-error')
+        })
+
+
+        this.pendingChanges.inserts.forEach(insert => {
+          insert.row.getElement().classList.add('edit-error')
+        })
+
+        this.saveError = {
+          title: ex.message,
+          message: ex.message,
+          ex
+        }
+        this.$noty.error(ex.message)
+
+        return
+      } finally {
+        if (!this.active) {
+          this.forceRedraw = true
+        }
+      }
     },
     discardChanges() {
       this.saveError = null
@@ -1363,7 +1360,7 @@ export default Vue.extend({
             this.lastUpdated = Date.now()
             this.preLoadScrollPosition = this.tableHolder.scrollLeft
             this.columnWidths = this.tabulator.getColumns().map((c) => {
-              return { field: c.getField(), width: c.getWidth()}
+              return { field: c.getField(), width: c.getWidth() }
             })
             resolve({
               last_page: 1,
@@ -1411,16 +1408,16 @@ export default Vue.extend({
       this.trigger(AppEvent.beginExport, { table: this.table })
     },
     exportFiltered() {
-      this.trigger(AppEvent.beginExport, {table: this.table, filters: this.filterForTabulator} )
+      this.trigger(AppEvent.beginExport, { table: this.table, filters: this.filterForTabulator })
     },
     modifyRowData(data) {
       const output = {};
       const keys = Object.keys(data);
 
-      for(const key of keys) {
+      for (const key of keys) {
         // skip internal columns
-        if(key.startsWith(this.internalColumnPrefix)) continue;
-        if(key.endsWith('--bks')) continue
+        if (key.startsWith(this.internalColumnPrefix)) continue;
+        if (key.endsWith('--bks')) continue
 
         output[key] = data[key];
       }
@@ -1432,8 +1429,8 @@ export default Vue.extend({
 
       this.tabulator.blockRedraw();
 
-      columns.forEach(({name, filter}) => {
-        if(filter) this.tabulator.showColumn(name)
+      columns.forEach(({ name, filter }) => {
+        if (filter) this.tabulator.showColumn(name)
         else this.tabulator.hideColumn(name)
       })
 
