@@ -1,3 +1,4 @@
+<!-- https://tabulator.info/docs/5.4/select#main-contents -->
 <template>
   <div v-hotkey="keymap" class="tabletable flex-col" :class="{'view-only': !editable}">
     <template v-if="!table && initialized">
