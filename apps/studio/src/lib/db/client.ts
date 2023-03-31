@@ -65,7 +65,10 @@ export interface DatabaseClient {
   alterPartition: (changes: AlterPartitionsSpec) => Promise<void>,
 
   applyChangesSql: (changes: TableChanges) => string,
+
   getInsertQuery: (tableInsert: TableInsert) => Promise<string>,
+  getInsertQueryFromQueryResult: (tableInsert: TableInsert) => Promise<string>,
+
   getQuerySelectTop: (table: string, limit: number, schema?: string) => void,
   getTableProperties: (table: string, schema?: string) => Promise<TableProperties | null>,
   getTableCreateScript: (table: string, schema?: string) => Promise<string>,
@@ -203,6 +206,8 @@ export class DBConnection {
   alterPartition = bindAsync.bind(null, 'alterPartition', this.server, this.database)
 
   getInsertQuery = getInsertQuery.bind(null, this.server, this.database)
+  getInsertQueryFromQueryResult = getInsertQueryFromQueryResult.bind(null, this.server, this.database)
+
   getQuerySelectTop = getQuerySelectTop.bind(null, this.server, this.database)
   getTableCreateScript = getTableCreateScript.bind(null, this.server, this.database)
   getTableSelectScript = getTableSelectScript.bind(null, this.server, this.database)
@@ -448,6 +453,15 @@ async function getInsertQuery(server: IDbConnectionServer, database: IDbConnecti
   return database.connection?.getInsertQuery(tableInsert);
 }
 
+/**
+ * Different from getInsertQuery, this function does not use the table structure to generate the query.
+ * It uses the query result to generate the query.
+ */
+async function getInsertQueryFromQueryResult(server: IDbConnectionServer, database: IDbConnectionDatabase, tableInsert: TableInsert) {
+  checkIsConnected(server , database);
+  return database.connection?.getInsertQueryFromQueryResult(tableInsert);
+}
+
 async function getQuerySelectTop(server: IDbConnectionServer, database: IDbConnectionDatabase, table: string, schema: string, limit: number) {
   checkIsConnected(server , database);
   return database.connection?.getQuerySelectTop(table, limit, schema);
@@ -504,7 +518,7 @@ function getViewCreateScript(server: IDbConnectionServer, database: IDbConnectio
 
 function getMaterializedViewCreateScript(server: IDbConnectionServer, database: IDbConnectionDatabase, view: string /* , schema */) {
   checkIsConnected(server , database);
-  
+
   if(typeof database.connection?.getMaterializedViewCreateScript !== 'function') {
     return null;
   } else {

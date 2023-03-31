@@ -61,14 +61,17 @@ export default async function (server, database) {
     listCharsets: () => listCharsets(conn),
     getDefaultCharset: () => getDefaultCharset(conn),
     listCollations: (charset) => listCollations(conn, charset),
-    createDatabase: ( databaseName, charset, collation) => createDatabase(conn, databaseName, charset, collation),
+    createDatabase: (databaseName, charset, collation) => createDatabase(conn, databaseName, charset, collation),
 
     // tabletable
     getTableLength: (table) => getTableLength(conn, table),
     selectTop: (table, offset, limit, orderBy, filters, schema, selects) => selectTop(conn, table, offset, limit, orderBy, filters, selects),
     selectTopStream: (db, table, orderBy, filters, chunkSize, schema) => selectTopStream(conn, db, table, orderBy, filters, chunkSize, schema),
     applyChangesSql: (changes) => applyChangesSql(changes, knex),
+
     getInsertQuery: (tableInsert) => getInsertQuery(conn, database.database, tableInsert),
+    getInsertQueryFromQueryResult: (tableInsert) => getInsertQueryFromQueryResult(conn, database.database, tableInsert),
+
     getQuerySelectTop: (table, limit) => getQuerySelectTop(conn, table, limit),
     getTableCreateScript: (table) => getTableCreateScript(conn, table),
     getViewCreateScript: (view) => getViewCreateScript(conn, view),
@@ -102,7 +105,7 @@ export function disconnect(conn) {
 }
 
 async function getVersion(conn) {
-  const { data } = await driverExecuteQuery(conn, { query: 'SELECT VERSION() as v'})
+  const { data } = await driverExecuteQuery(conn, { query: 'SELECT VERSION() as v' })
   const version = data[0]['v']
   if (!version) {
     return {
@@ -370,7 +373,7 @@ export async function listTableIndexes(conn, database, table) {
 
   return Object.keys(grouped).map((key, idx) => {
     const row = grouped[key][0]
-    const columns = grouped[key].map((r) => ({ name: r.Column_name, order: r.Collation === 'A' ? 'ASC' : 'DESC'}))
+    const columns = grouped[key].map((r) => ({ name: r.Column_name, order: r.Collation === 'A' ? 'ASC' : 'DESC' }))
     return {
       id: idx,
       name: row.Key_name,
@@ -535,7 +538,7 @@ export async function applyChanges(conn, changes) {
 
   await runWithConnection(conn, async (connection) => {
     const cli = { connection }
-    await driverExecuteQuery(cli, { query: 'START TRANSACTION'})
+    await driverExecuteQuery(cli, { query: 'START TRANSACTION' })
 
     try {
       if (changes.inserts) {
@@ -550,7 +553,7 @@ export async function applyChanges(conn, changes) {
         await deleteRows(cli, changes.deletes)
       }
 
-      await driverExecuteQuery(cli, { query: 'COMMIT'})
+      await driverExecuteQuery(cli, { query: 'COMMIT' })
     } catch (ex) {
       logger().error("query exception: ", ex)
       await driverExecuteQuery(cli, { query: 'ROLLBACK' });
@@ -695,8 +698,8 @@ export async function getViewCreateScript(conn, view) {
 export async function getRoutineCreateScript(conn, routine, type) {
   const sql = `SHOW CREATE ${type.toUpperCase()} ${routine}`;
   const { data } = await driverExecuteQuery(conn, { query: sql });
-  const result =  data.map((row) => {
-    const upperCaseIndexedRow = Object.keys(row).reduce((prev, current) => ({...prev, [current.toUpperCase()]: row[current]}), {});
+  const result = data.map((row) => {
+    const upperCaseIndexedRow = Object.keys(row).reduce((prev, current) => ({ ...prev, [current.toUpperCase()]: row[current] }), {});
     return upperCaseIndexedRow[`CREATE ${type.toUpperCase()}`];
   });
   return result;
@@ -739,7 +742,7 @@ export async function truncateAllTables(conn) {
   });
 }
 
-export async function dropElement (conn, elementName, typeOfElement) {
+export async function dropElement(conn, elementName, typeOfElement) {
   await runWithConnection(conn, async (connection) => {
     const connClient = { connection }
     const sql = `DROP ${MysqlData.wrapLiteral(typeOfElement)} ${wrapIdentifier(elementName)}`
@@ -747,7 +750,7 @@ export async function dropElement (conn, elementName, typeOfElement) {
     await driverExecuteQuery(connClient, { query: sql })
   });
 }
-export async function truncateElement (conn, elementName, typeOfElement) {
+export async function truncateElement(conn, elementName, typeOfElement) {
   await runWithConnection(conn, async (connection) => {
     const connClient = { connection }
     const sql = `TRUNCATE ${MysqlData.wrapLiteral(typeOfElement)} ${wrapIdentifier(elementName)}`
@@ -767,7 +770,7 @@ export async function getTableProperties(conn, table) {
     and table_name = ?
   `
 
-  const { data } = await driverExecuteQuery(conn, { query: propsSql, params: [ table ] })
+  const { data } = await driverExecuteQuery(conn, { query: propsSql, params: [table] })
   const {
     description,
     data_size,
@@ -850,10 +853,10 @@ function configDatabase(server, database) {
     dateStrings: true,
     supportBigNumbers: true,
     bigNumberStrings: true,
-    connectTimeout  : 60 * 60 * 1000,
+    connectTimeout: 60 * 60 * 1000,
   };
 
-  if(server.config.socketPathEnabled) {
+  if (server.config.socketPathEnabled) {
     config.socketPath = server.config.socketPath;
     config.host = null;
     config.port = null;
@@ -910,8 +913,8 @@ function getRealError(conn, err) {
 function parseFields(fields, rowsAsArray) {
   if (!fields) return []
   return fields.map((field, idx) => {
-      return { id: rowsAsArray ? `c${idx}` : field.name, ...field }
-    })
+    return { id: rowsAsArray ? `c${idx}` : field.name, ...field }
+  })
 }
 
 
@@ -946,19 +949,19 @@ function identifyCommands(queryText) {
 }
 
 async function executeWithTransaction(conn, queryArgs) {
-    const fullQuery = joinQueries([
-      'START TRANSACTION', queryArgs.query, 'COMMIT'
-    ])
-    return await runWithConnection(conn, async (connection) => {
-      const cli = { connection }
-      try {
-        return await driverExecuteQuery(cli, {...queryArgs, query: fullQuery})
-      } catch (ex) {
-        log.error("executeWithTransaction", fullQuery, ex)
-        await driverExecuteQuery(cli, { query: 'ROLLBACK' })
-        throw ex
-      }
-    })
+  const fullQuery = joinQueries([
+    'START TRANSACTION', queryArgs.query, 'COMMIT'
+  ])
+  return await runWithConnection(conn, async (connection) => {
+    const cli = { connection }
+    try {
+      return await driverExecuteQuery(cli, { ...queryArgs, query: fullQuery })
+    } catch (ex) {
+      log.error("executeWithTransaction", fullQuery, ex)
+      await driverExecuteQuery(cli, { query: 'ROLLBACK' })
+      throw ex
+    }
+  })
 }
 
 function driverExecuteQuery(conn, queryArgs) {

@@ -104,7 +104,7 @@ async function getVersion(conn: HasPool): Promise<VersionInfo> {
     isPostgres,
     isCockroach,
     isRedshift,
-    number, 
+    number,
     hasPartitions: (isPostgres && number >= 100000) //for future cochroach support?: || (isCockroach && number >= 200070)
   }
 }
@@ -191,7 +191,10 @@ export default async function (server: any, database: any): Promise<DatabaseClie
     selectTop: (table: string, offset: number, limit: number, orderBy: OrderBy[], filters: TableFilter[] | string, schema: string = defaultSchema, selects: string[] = ['*']) => selectTop(conn, table, offset, limit, orderBy, filters, schema, selects),
     selectTopStream: (database: string, table: string, orderBy: OrderBy[], filters: TableFilter[] | string, chunkSize: number, schema: string = defaultSchema) => selectTopStream(conn, database, table, orderBy, filters, chunkSize, schema),
     applyChangesSql: (changes: TableChanges): string => applyChangesSql(changes, knex),
+
     getInsertQuery: (tableInsert: TableInsert): Promise<string> => getInsertQuery(conn, database.database, tableInsert),
+    getInsertQueryFromQueryResult: (tableInsert: TableInsert): Promise<string> => getInsertQueryFromQueryResult(conn, database.database, tableInsert),
+
     getQuerySelectTop: (table, limit, schema = defaultSchema) => getQuerySelectTop(conn, table, limit, schema),
     getTableCreateScript: (table, schema = defaultSchema) => getTableCreateScript(conn, table, schema),
     getViewCreateScript: (view, schema = defaultSchema) => getViewCreateScript(conn, view, schema),
@@ -246,7 +249,7 @@ export async function listTables(conn: HasPool, filter: FilterOptions = { schema
     // TODO (day): when we support more dbs for partitioning, we will need to construct a different query for cockroach.
     sql += `
         pc.relkind as tabletype
-      FROM information_schema.tables AS t 
+      FROM information_schema.tables AS t
       LEFT OUTER JOIN pg_inherits AS i
       ON t.table_name::text = i.inhrelid::regclass::text
       LEFT OUTER JOIN pg_class AS pc
@@ -257,7 +260,7 @@ export async function listTables(conn: HasPool, filter: FilterOptions = { schema
   } else {
     sql += `
         'r' as tabletype
-      FROM information_schema.tables AS t 
+      FROM information_schema.tables AS t
       WHERE t.table_type NOT LIKE '%VIEW%'
     `;
   }
@@ -275,9 +278,9 @@ export async function listTablePartitions(conn: HasPool, tableName: string) {
   const version = await getVersion(conn);
   // only postgres will pass this canary for now.
   if (!version.hasPartitions) return null;
-  
+
   const sql = knex.raw(`
-    SELECT 
+    SELECT
       ps.schemaname AS schema,
       ps.relname AS name,
       pg_get_expr(pt.relpartbound, pt.oid, true) AS expression
@@ -291,7 +294,7 @@ export async function listTablePartitions(conn: HasPool, tableName: string) {
   const data = await driverExecuteSingle(conn, { query: sql });
 
   return data.rows;
-  
+
 }
 
 export async function listViews(conn: HasPool, filter: FilterOptions = { schema: 'public' }) {
@@ -1274,6 +1277,12 @@ export async function listDatabases(conn: Conn, filter?: DatabaseFilterOptions) 
 }
 
 export async function getInsertQuery(conn: HasPool, database: string, tableInsert: TableInsert): Promise<string> {
+  const columns = await listTableColumns(conn, database, tableInsert.table, tableInsert.schema)
+
+  return buildInsertQuery(knex, tableInsert, columns, _.toString)
+}
+
+export async function getInsertQueryFromQueryResult(conn: HasPool, database: string, tableInsert: TableInsert): Promise<string> {
   const columns = await listTableColumns(conn, database, tableInsert.table, tableInsert.schema)
 
   return buildInsertQuery(knex, tableInsert, columns, _.toString)
