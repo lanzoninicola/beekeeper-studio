@@ -46,7 +46,14 @@
     </div>
     <div class="bottom-panel" ref="bottomPanel">
       <progress-bar @cancel="cancelQuery" :message="runningText" v-if="running"></progress-bar>
-      <result-table ref="table" v-else-if="rowCount > 0" :active="active" :tableHeight="tableHeight" :result="result" :query='query'></result-table>
+      <result-table
+        ref="table"
+        v-else-if="rowCount > 0"
+        :active="active"
+        :tableHeight="tableHeight"
+        :result="result"
+        :query='query'>
+      </result-table>
       <div class="message" v-else-if="result">
         <div class="alert alert-info">
           <i class="material-icons-outlined">info</i>

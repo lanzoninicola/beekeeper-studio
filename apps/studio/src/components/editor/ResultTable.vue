@@ -161,9 +161,11 @@
             action: async (_e, cell) => {
               const fixed = this.$bks.cleanData(cell.getRow().getData(), this.tableColumns)
 
+              console.log('this.tableColumns', fixed)
+
               const tableInsert = {
                 table: 'mytable',
-                schema: null,
+                schema: 'schema',
                 data: [fixed],
               }
               const query = await this.connection.getInsertQuery(tableInsert)
